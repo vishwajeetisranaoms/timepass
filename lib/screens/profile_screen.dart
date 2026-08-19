@@ -3,12 +3,102 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/custom_bars.dart';
+import '../services/api_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _profile;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    final profile = await ApiService.getProfile();
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(40.0),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryFixedDim),
+        ),
+      );
+    }
+
+    final username = _profile?['username'] ?? 'CipherPunk99';
+    final tagline = _profile?['tagline'] ?? 'Neon District Runner';
+    final level = _profile?['level'] ?? 24;
+    final currentXp = _profile?['currentXp'] ?? 450;
+    final maxXp = _profile?['maxXp'] ?? 1000;
+    final xpProgress = (currentXp / maxXp).clamp(0.0, 1.0);
+    final questsCount = _profile?['questsCount'] ?? 128;
+    final connectionsCount = _profile?['connectionsCount'] ?? 42;
+    final badgesCount = _profile?['badgesCount'] ?? 15;
+
+    final List<dynamic> badges = _profile?['badges'] ?? [
+      {
+        'title': 'Night Owl',
+        'subtitle': 'Active past 2 AM',
+        'iconName': 'dark_mode',
+        'colorHex': '#00DBE9',
+        'isLocked': false
+      },
+      {
+        'title': 'Social Butterfly',
+        'subtitle': '10+ connections',
+        'iconName': 'forum',
+        'colorHex': '#D7CA00',
+        'isLocked': false
+      },
+      {
+        'title': 'Explorer',
+        'subtitle': 'Visited 50 zones',
+        'iconName': 'location_on',
+        'colorHex': '#00DBE9',
+        'isLocked': false
+      },
+      {
+        'title': 'Locked',
+        'subtitle': 'Reach Level 30',
+        'iconName': 'lock',
+        'colorHex': '#849495',
+        'isLocked': true
+      },
+    ];
+
+    final List<dynamic> recentIntel = _profile?['recentIntel'] ?? [
+      {
+        'title': 'Completed the "Neon Alley Run" quest.',
+        'subtitle': '2 hours ago • +50 XP',
+        'iconName': 'military_tech',
+        'colorHex': '#D7CA00'
+      },
+      {
+        'title': 'Connected with @GlitchWalker.',
+        'subtitle': '5 hours ago',
+        'iconName': 'person_add',
+        'colorHex': '#00DBE9'
+      },
+    ];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Center(
@@ -51,9 +141,10 @@ class ProfileScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: const CircleAvatar(
+                              child: CircleAvatar(
                                 backgroundImage: NetworkImage(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuASO9XHc8AfnxC4H-ruM-jzwea5xe6_F_6Ha4uoZZD1Zj0WMH2zpE7C48PmtJYI7LiHyLDR5qG8Oci4llDW_q7ApzoUL0ZTxszL0cUbTQXwukzPKPFFR-JspcMXfG3u7japYa1lGQWskIrG4SMmCAVNSmkG8zdIoGI3w-V1YIGxapdcOihiZXbA4gRY5T3_lKIJD9lHmGI49xhPQXwAHw3G0FD-mniM6d_JMKN5vJoi49IH3MjldTWu',
+                                  _profile?['avatarUrl'] ??
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuASO9XHc8AfnxC4H-ruM-jzwea5xe6_F_6Ha4uoZZD1Zj0WMH2zpE7C48PmtJYI7LiHyLDR5qG8Oci4llDW_q7ApzoUL0ZTxszL0cUbTQXwukzPKPFFR-JspcMXfG3u7japYa1lGQWskIrG4SMmCAVNSmkG8zdIoGI3w-V1YIGxapdcOihiZXbA4gRY5T3_lKIJD9lHmGI49xhPQXwAHw3G0FD-mniM6d_JMKN5vJoi49IH3MjldTWu',
                                 ),
                               ),
                             ),
@@ -83,7 +174,7 @@ class ProfileScreen extends StatelessWidget {
                                         color: AppColors.primaryFixedDim),
                                     const SizedBox(width: 2),
                                     Text(
-                                      '24',
+                                      '$level',
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
@@ -107,7 +198,7 @@ class ProfileScreen extends StatelessWidget {
                                 : CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'CipherPunk99',
+                                username,
                                 style: GoogleFonts.inter(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
@@ -116,7 +207,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Neon District Runner',
+                                tagline,
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   color: AppColors.onSurfaceVariant,
@@ -154,26 +245,26 @@ class ProfileScreen extends StatelessWidget {
                                               fontWeight: FontWeight.w600,
                                               color: AppColors.primary,
                                             ),
-                                            children: const [
+                                            children: [
                                               TextSpan(
-                                                text: '450',
-                                                style: TextStyle(
+                                                text: '$currentXp',
+                                                style: const TextStyle(
                                                     color: AppColors
                                                         .primaryFixedDim),
                                               ),
-                                              TextSpan(text: ' / 1000 XP'),
+                                              TextSpan(text: ' / $maxXp XP'),
                                             ],
                                           ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    const AnimatedXpBar(progress: 0.45),
+                                    AnimatedXpBar(progress: xpProgress),
                                     const SizedBox(height: 6),
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: Text(
-                                        '550 XP to Level 25',
+                                        '${maxXp - currentXp} XP to Level ${level + 1}',
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
                                           color: AppColors.onSurfaceVariant
@@ -190,17 +281,17 @@ class ProfileScreen extends StatelessWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: _buildStatTile('128', 'QUESTS',
+                                    child: _buildStatTile('$questsCount', 'QUESTS',
                                         AppColors.tertiaryFixedDim),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: _buildStatTile('42', 'CONNECTIONS',
+                                    child: _buildStatTile('$connectionsCount', 'CONNECTIONS',
                                         AppColors.primaryFixedDim),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: _buildStatTile('15', 'BADGES',
+                                    child: _buildStatTile('$badgesCount', 'BADGES',
                                         AppColors.secondaryFixedDim),
                                   ),
                                 ],
@@ -247,34 +338,29 @@ class ProfileScreen extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final crossAxisCount = constraints.maxWidth > 650 ? 4 : 2;
-                  return GridView.count(
+                  return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.1,
-                    children: [
-                      _buildBadgeCard(
-                        icon: Icons.dark_mode,
-                        title: 'Night Owl',
-                        subtitle: 'Active past 2 AM',
-                        color: AppColors.primaryFixedDim,
-                      ),
-                      _buildBadgeCard(
-                        icon: Icons.forum,
-                        title: 'Social Butterfly',
-                        subtitle: '10+ connections',
-                        color: AppColors.tertiaryFixedDim,
-                      ),
-                      _buildBadgeCard(
-                        icon: Icons.location_on,
-                        title: 'Explorer',
-                        subtitle: 'Visited 50 zones',
-                        color: AppColors.primaryFixedDim,
-                      ),
-                      _buildLockedBadgeCard(),
-                    ],
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.1,
+                    ),
+                    itemCount: badges.length,
+                    itemBuilder: (context, index) {
+                      final b = badges[index];
+                      final isLocked = b['isLocked'] == true;
+                      if (isLocked) {
+                        return _buildLockedBadgeCard();
+                      }
+                      return _buildBadgeCard(
+                        icon: _getIconData(b['iconName']),
+                        title: b['title'] ?? '',
+                        subtitle: b['subtitle'] ?? '',
+                        color: _parseColor(b['colorHex']),
+                      );
+                    },
                   );
                 },
               ),
@@ -293,26 +379,50 @@ class ProfileScreen extends StatelessWidget {
               const Divider(color: Colors.white10),
               const SizedBox(height: 16),
 
-              _buildIntelFeedItem(
-                icon: Icons.military_tech,
-                iconColor: AppColors.tertiaryFixedDim,
-                title: 'Completed the "Neon Alley Run" quest.',
-                subtitle: '2 hours ago • +50 XP',
-                highlightText: '"Neon Alley Run"',
-              ),
-              const SizedBox(height: 12),
-              _buildIntelFeedItem(
-                icon: Icons.person_add,
-                iconColor: AppColors.primaryFixedDim,
-                title: 'Connected with @GlitchWalker.',
-                subtitle: '5 hours ago',
-                highlightText: '@GlitchWalker',
+              Column(
+                children: recentIntel.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildIntelFeedItem(
+                      icon: _getIconData(item['iconName']),
+                      iconColor: _parseColor(item['colorHex']),
+                      title: item['title'] ?? '',
+                      subtitle: item['subtitle'] ?? '',
+                    ),
+                  );
+                }).toList(),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  IconData _getIconData(String? iconName) {
+    switch (iconName) {
+      case 'dark_mode':
+        return Icons.dark_mode;
+      case 'forum':
+        return Icons.forum;
+      case 'location_on':
+        return Icons.location_on;
+      case 'military_tech':
+        return Icons.military_tech;
+      case 'person_add':
+        return Icons.person_add;
+      case 'lock':
+      default:
+        return Icons.lock;
+    }
+  }
+
+  Color _parseColor(String? colorHex) {
+    if (colorHex != null && colorHex.startsWith('#')) {
+      final hex = colorHex.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    }
+    return AppColors.primaryFixedDim;
   }
 
   Widget _buildStatTile(String value, String label, Color color) {
@@ -446,7 +556,6 @@ class ProfileScreen extends StatelessWidget {
     required Color iconColor,
     required String title,
     required String subtitle,
-    required String highlightText,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
