@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 
 class DiscoveryScreen extends StatefulWidget {
   const DiscoveryScreen({super.key});
@@ -11,6 +12,8 @@ class DiscoveryScreen extends StatefulWidget {
 
 class _DiscoveryScreenState extends State<DiscoveryScreen> {
   String _selectedFilter = 'All Vibes';
+  List<dynamic>? _vibes;
+  bool _isLoading = true;
 
   final List<String> _filters = [
     'All Vibes',
@@ -18,6 +21,22 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     'Gaming',
     'Music',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchVibes();
+  }
+
+  Future<void> _fetchVibes() async {
+    final vibes = await ApiService.getVibes();
+    if (mounted) {
+      setState(() {
+        _vibes = vibes;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,61 +129,87 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           const SizedBox(height: 24),
 
           // Bento Grid Cards
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 700;
-              return Column(
-                children: [
-                  // Row 1: Featured & Secondary
-                  if (isWide)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 7, child: _buildFeaturedCard()),
-                        const SizedBox(width: 16),
-                        Expanded(flex: 5, child: _buildSecondaryCard()),
-                      ],
-                    )
-                  else ...[
-                    _buildFeaturedCard(),
-                    const SizedBox(height: 16),
-                    _buildSecondaryCard(),
-                  ],
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryFixedDim,
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final featured = _getVibe(0, 'Late Night Ramen', '0.8 mi away • Cyber Noodle Bar', 'Hot Now', 24);
+                final secondary = _getVibe(1, 'Retro Arcade Tour', '1.2 mi away', 'Gaming', 8);
+                final tertiary1 = _getVibe(2, 'Midnight Synthwave', 'Starts in 2 hrs', 'Music', 42);
+                final tertiary2 = _getVibe(3, 'Rooftop Chill', '2.5 mi away', 'Chill', 5);
 
-                  const SizedBox(height: 16),
+                return Column(
+                  children: [
+                    // Row 1: Featured & Secondary
+                    if (isWide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 7, child: _buildFeaturedCard(featured)),
+                          const SizedBox(width: 16),
+                          Expanded(flex: 5, child: _buildSecondaryCard(secondary)),
+                        ],
+                      )
+                    else ...[
+                      _buildFeaturedCard(featured),
+                      const SizedBox(height: 16),
+                      _buildSecondaryCard(secondary),
+                    ],
 
-                  // Row 2: Tertiary Cards
-                  if (isWide)
-                    Row(
-                      children: [
-                        Expanded(child: _buildTertiaryCard1()),
-                        const SizedBox(width: 16),
-                        Expanded(child: _buildTertiaryCard2()),
-                      ],
-                    )
-                  else ...[
-                    _buildTertiaryCard1(),
                     const SizedBox(height: 16),
-                    _buildTertiaryCard2(),
+
+                    // Row 2: Tertiary Cards
+                    if (isWide)
+                      Row(
+                        children: [
+                          Expanded(child: _buildTertiaryCard1(tertiary1)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildTertiaryCard2(tertiary2)),
+                        ],
+                      )
+                    else ...[
+                      _buildTertiaryCard1(tertiary1),
+                      const SizedBox(height: 16),
+                      _buildTertiaryCard2(tertiary2),
+                    ],
                   ],
-                ],
-              );
-            },
-          ),
+                );
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildFeaturedCard() {
+  Map<String, dynamic> _getVibe(
+      int index, String fallbackTitle, String fallbackLoc, String fallbackTag, int fallbackCount) {
+    if (_vibes != null && _vibes!.length > index) {
+      return Map<String, dynamic>.from(_vibes![index]);
+    }
+    return {
+      'title': fallbackTitle,
+      'location': fallbackLoc,
+      'tag': fallbackTag,
+      'stitchingCount': fallbackCount,
+    };
+  }
+
+  Widget _buildFeaturedCard(Map<String, dynamic> data) {
     return Container(
       height: 360,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        image: const DecorationImage(
+        image: DecorationImage(
           image: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuCvf9h8lcOCXNSPHYSmnz23JJPfJqZtYreWb2630WRIQlobzrOViAUg2HyyRNOTGoOQETPwu336_QMJnR36zjNnrM5U64ADJGyLP-hFTrmxH5YtoMIH42cN2eA6cJ_0F9khtYde8v-6P6LJbiU4G8pR3xXZPzbkXAe_sPFM_ZQ0JQcPf_LrScSjDp_d-rvc6f_4Fjuyt9VzAFBRmg2UzaRvxHYoAFuaFARphXbI1qgZ9H-1hzpgPmB8',
+            data['imageUrl'] ??
+                'https://lh3.googleusercontent.com/aida-public/AB6AXuCvf9h8lcOCXNSPHYSmnz23JJPfJqZtYreWb2630WRIQlobzrOViAUg2HyyRNOTGoOQETPwu336_QMJnR36zjNnrM5U64ADJGyLP-hFTrmxH5YtoMIH42cN2eA6cJ_0F9khtYde8v-6P6LJbiU4G8pR3xXZPzbkXAe_sPFM_ZQ0JQcPf_LrScSjDp_d-rvc6f_4Fjuyt9VzAFBRmg2UzaRvxHYoAFuaFARphXbI1qgZ9H-1hzpgPmB8',
           ),
           fit: BoxFit.cover,
         ),
@@ -203,7 +248,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           color: AppColors.secondaryContainer, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        'Hot Now',
+                        data['tag'] ?? 'Hot Now',
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -228,7 +273,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                           color: AppColors.onSurfaceVariant, size: 14),
                       const SizedBox(width: 4),
                       Text(
-                        '24 Stitchers',
+                        '${data['stitchingCount'] ?? 24} Stitchers',
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -242,7 +287,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Late Night Ramen',
+              data['title'] ?? 'Late Night Ramen',
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -256,7 +301,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     color: AppColors.onSurfaceVariant, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '0.8 mi away • Cyber Noodle Bar',
+                  data['location'] ?? '0.8 mi away • Cyber Noodle Bar',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppColors.onSurfaceVariant,
@@ -338,15 +383,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     );
   }
 
-  Widget _buildSecondaryCard() {
+  Widget _buildSecondaryCard(Map<String, dynamic> data) {
     return Container(
       height: 360,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        image: const DecorationImage(
+        image: DecorationImage(
           image: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBsdrFyppiCx5T_KNp0lgDIqd_XhVdOYKFq7SW7M9AtPzmB0ZbXq5khzUFCl-j0XTpKV5gyNpbqzXWQJQLPvwncnQWTbUkkRX2kg_gyKHrseHmn-J3jqW6JqxDqtxty223t4_QzTSh_GMHDRBy5SMSbQyiVvxtHa7zuCHd9xVsj9VzllbyBbqUHRuxHjKTkjMLHvBmYUjH-AGsHHI4EDv1fLike88uUuAAyW-zJRlnS4rvDwV8aSpLC',
+            data['imageUrl'] ??
+                'https://lh3.googleusercontent.com/aida-public/AB6AXuBsdrFyppiCx5T_KNp0lgDIqd_XhVdOYKFq7SW7M9AtPzmB0ZbXq5khzUFCl-j0XTpKV5gyNpbqzXWQJQLPvwncnQWTbUkkRX2kg_gyKHrseHmn-J3jqW6JqxDqtxty223t4_QzTSh_GMHDRBy5SMSbQyiVvxtHa7zuCHd9xVsj9VzllbyBbqUHRuxHjKTkjMLHvBmYUjH-AGsHHI4EDv1fLike88uUuAAyW-zJRlnS4rvDwV8aSpLC',
           ),
           fit: BoxFit.cover,
         ),
@@ -383,7 +429,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       color: AppColors.primaryFixedDim, size: 14),
                   const SizedBox(width: 4),
                   Text(
-                    'Gaming',
+                    data['tag'] ?? 'Gaming',
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -395,7 +441,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Retro Arcade Tour',
+              data['title'] ?? 'Retro Arcade Tour',
               style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -409,7 +455,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     color: AppColors.onSurfaceVariant, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '1.2 mi away',
+                  data['distance'] ?? data['location'] ?? '1.2 mi away',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppColors.onSurfaceVariant,
@@ -427,7 +473,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                         color: AppColors.onSurfaceVariant, size: 14),
                     const SizedBox(width: 4),
                     Text(
-                      '8 Here',
+                      '${data['stitchingCount'] ?? 8} Here',
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 12,
                         color: AppColors.onSurfaceVariant,
@@ -463,15 +509,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     );
   }
 
-  Widget _buildTertiaryCard1() {
+  Widget _buildTertiaryCard1(Map<String, dynamic> data) {
     return Container(
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        image: const DecorationImage(
+        image: DecorationImage(
           image: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuBRVBwXhNaPM6XNmW52ERzeohdHcojXEVi6DR_5bJSs3FdWuR8E023jZeVpzuKvN1KK_yxgKb7ywA0FBm0d49QTml3JdET4FYI84q3krD9mbZCctLOTSHtFMvN5NbUK-MIBPEcCBoKvZ7jEgKyHjU6AcHUmdrRB-wMWOlC6mv4Dqot9pshf626_muAPaPlKUJRrdfIX8o9rgixkzSn8CaIN_SxPp24p2xV-NI6S0ly7r6eNX16mB39y',
+            data['imageUrl'] ??
+                'https://lh3.googleusercontent.com/aida-public/AB6AXuBRVBwXhNaPM6XNmW52ERzeohdHcojXEVi6DR_5bJSs3FdWuR8E023jZeVpzuKvN1KK_yxgKb7ywA0FBm0d49QTml3JdET4FYI84q3krD9mbZCctLOTSHtFMvN5NbUK-MIBPEcCBoKvZ7jEgKyHjU6AcHUmdrRB-wMWOlC6mv4Dqot9pshf626_muAPaPlKUJRrdfIX8o9rgixkzSn8CaIN_SxPp24p2xV-NI6S0ly7r6eNX16mB39y',
           ),
           fit: BoxFit.cover,
         ),
@@ -494,7 +541,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Midnight Synthwave',
+              data['title'] ?? 'Midnight Synthwave',
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -529,7 +576,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Text(
-                    '42 Interested',
+                    '${data['stitchingCount'] ?? 42} Interested',
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
                       color: AppColors.onSurface,
@@ -557,15 +604,16 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
     );
   }
 
-  Widget _buildTertiaryCard2() {
+  Widget _buildTertiaryCard2(Map<String, dynamic> data) {
     return Container(
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        image: const DecorationImage(
+        image: DecorationImage(
           image: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuAwB44tDq0h8ieH1OmKLh9Ya2yuPEKP2h2YkYFYgou46V1I9ZyXDyLsZY1YqyGN4Ze746xw7jRQx-c-AcjSl9me-Y-MUVCTJSlgwltA7SGeS43h1kA6HB6eEFOMdKkOUPbnCHEkkxSfSD7wwzPu1X78KEqBomoeZo5yydGCtdII7XxuJG_Cglx1pB9zOvDsZqZTd-WdxkHSkn8Clkm84lhphlBqhkEjiC77ydROJAdvUaLXm_rdrpY5',
+            data['imageUrl'] ??
+                'https://lh3.googleusercontent.com/aida-public/AB6AXuAwB44tDq0h8ieH1OmKLh9Ya2yuPEKP2h2YkYFYgou46V1I9ZyXDyLsZY1YqyGN4Ze746xw7jRQx-c-AcjSl9me-Y-MUVCTJSlgwltA7SGeS43h1kA6HB6eEFOMdKkOUPbnCHEkkxSfSD7wwzPu1X78KEqBomoeZo5yydGCtdII7XxuJG_Cglx1pB9zOvDsZqZTd-WdxkHSkn8Clkm84lhphlBqhkEjiC77ydROJAdvUaLXm_rdrpY5',
           ),
           fit: BoxFit.cover,
         ),
@@ -588,7 +636,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Rooftop Chill',
+              data['title'] ?? 'Rooftop Chill',
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -602,7 +650,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     color: AppColors.onSurfaceVariant, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '2.5 mi away',
+                  data['distance'] ?? '2.5 mi away',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.onSurfaceVariant,
@@ -623,7 +671,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: Text(
-                    '5 Here',
+                    '${data['stitchingCount'] ?? 5} Here',
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
                       color: AppColors.onSurface,

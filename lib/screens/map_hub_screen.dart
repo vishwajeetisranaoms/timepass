@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/custom_bars.dart';
+import '../services/api_service.dart';
 
 class MapHubScreen extends StatefulWidget {
   const MapHubScreen({super.key});
@@ -12,6 +13,25 @@ class MapHubScreen extends StatefulWidget {
 }
 
 class _MapHubScreenState extends State<MapHubScreen> {
+  List<dynamic>? _hangouts;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHangouts();
+  }
+
+  Future<void> _fetchHangouts() async {
+    final hangouts = await ApiService.getHangouts();
+    if (mounted) {
+      setState(() {
+        _hangouts = hangouts;
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -200,183 +220,138 @@ class _MapHubScreenState extends State<MapHubScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Hangout Card 1
-                GlassCard(
-                  borderColor: AppColors.primaryFixedDim.withValues(alpha: 0.3),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Cyber-Dojo Sparring',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on,
-                                      size: 14,
-                                      color: AppColors.onSurfaceVariant),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Shinjuku Grid Sector 4',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Starts in 15m',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.secondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Capacity filling...',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          Text(
-                            '8/10',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryFixedDim,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      const CapacityBar(
-                        progress: 0.8,
-                        activeColor: AppColors.primaryFixedDim,
-                      ),
-                    ],
+                if (_isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(
+                        color: AppColors.primaryFixedDim),
+                  )
+                else ...[
+                  // Hangout Card 1
+                  _buildHangoutCard(
+                    _getHangout(0, 'Cyber-Dojo Sparring',
+                        'Shinjuku Grid Sector 4', 'Starts in 15m', 8, 10),
+                    borderColor:
+                        AppColors.primaryFixedDim.withValues(alpha: 0.3),
+                    accentColor: AppColors.primaryFixedDim,
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Hangout Card 2
-                GlassCard(
-                  borderColor: AppColors.secondaryContainer.withValues(alpha: 0.3),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Synthwave DJ Set',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.location_on,
-                                      size: 14,
-                                      color: AppColors.onSurfaceVariant),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'The Neon Vault',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Live Now',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Capacity filling...',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          Text(
-                            '45/50',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.secondaryContainer,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      const CapacityBar(
-                        progress: 0.9,
-                        activeColor: AppColors.secondaryContainer,
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  // Hangout Card 2
+                  _buildHangoutCard(
+                    _getHangout(1, 'Synthwave DJ Set', 'The Neon Vault',
+                        'Live Now', 45, 50),
+                    borderColor:
+                        AppColors.secondaryContainer.withValues(alpha: 0.3),
+                    accentColor: AppColors.secondaryContainer,
                   ),
-                ),
+                ],
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getHangout(int index, String fallbackTitle,
+      String fallbackLoc, String fallbackTime, int currentCap, int maxCap) {
+    if (_hangouts != null && _hangouts!.length > index) {
+      return Map<String, dynamic>.from(_hangouts![index]);
+    }
+    return {
+      'title': fallbackTitle,
+      'location': fallbackLoc,
+      'timeStatus': fallbackTime,
+      'currentCapacity': currentCap,
+      'maxCapacity': maxCap,
+    };
+  }
+
+  Widget _buildHangoutCard(Map<String, dynamic> data,
+      {required Color borderColor, required Color accentColor}) {
+    final current = (data['currentCapacity'] as num?)?.toInt() ?? 0;
+    final maxCap = (data['maxCapacity'] as num?)?.toInt() ?? 1;
+    final progress = (current / maxCap).clamp(0.0, 1.0);
+
+    return GlassCard(
+      borderColor: borderColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['title'] ?? '',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 14, color: AppColors.onSurfaceVariant),
+                      const SizedBox(width: 4),
+                      Text(
+                        data['location'] ?? '',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  data['timeStatus'] ?? '',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Capacity filling...',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              Text(
+                '$current/$maxCap',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: accentColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          CapacityBar(
+            progress: progress,
+            activeColor: accentColor,
           ),
         ],
       ),
